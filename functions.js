@@ -5,7 +5,28 @@
  * @returns {string} A confirmation message.
  */
 function DEBUGLOG(message) {
-    return message;
+    // @ts-ignore
+    if (window.Excel) {
+        // @ts-ignore
+        window.Excel.run(function (context) {
+            var sheet = context.workbook.worksheets.getActiveWorksheet();
+            var range = sheet.getRange("A1");
+            range.values = [[message]];
+            return context.sync();
+        }).catch(function (error) {
+            console.log("Error: " + error);
+            // @ts-ignore
+            if (window.Excel.run) {
+                // @ts-ignore
+                window.Excel.run(function (ctx) {
+                    var range = ctx.workbook.worksheets.getActiveWorksheet().getRange("A1");
+                    range.values = [["Error logging: " + error.message]];
+                    return ctx.sync();
+                });
+            }
+        });
+    }
+    return "Logged.";
 }
 
 /**
@@ -64,6 +85,8 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                     settingObjects.forEach(function(setting, index) {
                         settingsValues[settingNames[index]] = setting.value;
                     });
+
+                    DEBUGLOG("Settings: " + JSON.stringify(settingsValues));
 
                     var knowledge_model_id = settingsValues["knowledge_model_id"];
                     var api_key = settingsValues["api_key"];
