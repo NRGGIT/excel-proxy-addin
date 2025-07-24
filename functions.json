@@ -1,0 +1,22 @@
+{
+  "functions": [
+    {
+      "id": "TESTGET",
+      "name": "TESTGET",
+      "description": "Gets the text from a URL.",
+      "helpUrl": "http://www.contoso.com",
+      "result": {
+        "type": "string",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "url",
+          "description": "The URL to fetch.",
+          "type": "string",
+          "dimensionality": "scalar"
+        }
+      ]
+    }
+  ]
+}
