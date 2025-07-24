@@ -1,10 +1,10 @@
 /**
- * Writes a message to cell A1.
- * @customfunction LOG
+ * Writes a message to cell A1 for debugging.
+ * @customfunction DEBUGLOG
  * @param {string} message The message to write.
  * @returns {string} A confirmation message.
  */
-function LOG(message) {
+function DEBUGLOG(message) {
     // @ts-ignore
     if (window.Excel) {
         // @ts-ignore
@@ -36,25 +36,25 @@ function LOG(message) {
  * @returns {string} The text from the URL.
  */
 function TESTGET(url) {
-    LOG("TESTGET called with URL: " + url);
+    DEBUGLOG("TESTGET called with URL: " + url);
     const proxyUrl = "https://api.allorigins.win/raw?url=";
     return new Promise(function (resolve, reject) {
         fetch(proxyUrl + encodeURIComponent(url))
             .then(function (response) {
-                LOG("Fetch response received. Status: " + response.status);
+                DEBUGLOG("Fetch response received. Status: " + response.status);
                 if (response.ok) {
                     return response.text();
                 } else {
-                    LOG("Error fetching URL: " + response.statusText);
+                    DEBUGLOG("Error fetching URL: " + response.statusText);
                     reject(new Error("Error fetching URL: " + response.statusText));
                 }
             })
             .then(function (text) {
-                LOG("Response text received. Length: " + text.length);
+                DEBUGLOG("Response text received. Length: " + text.length);
                 resolve(text);
             })
             .catch(function (error) {
-                LOG("Fetch error: " + error.message);
+                DEBUGLOG("Fetch error: " + error.message);
                 reject(error);
             });
     });
@@ -63,7 +63,7 @@ function TESTGET(url) {
 // @ts-ignore
 if (window.CustomFunctions) {
     // @ts-ignore
-    CustomFunctions.associate("LOG", LOG);
+    CustomFunctions.associate("DEBUGLOG", DEBUGLOG);
     // @ts-ignore
     CustomFunctions.associate("TESTGET", TESTGET);
 }

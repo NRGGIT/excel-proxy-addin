@@ -19,9 +19,9 @@
       ]
     },
     {
-      "id": "LOG",
-      "name": "LOG",
-      "description": "Writes a message to cell A1.",
+      "id": "DEBUGLOG",
+      "name": "DEBUGLOG",
+      "description": "Writes a message to cell A1 for debugging.",
       "helpUrl": "http://www.contoso.com",
       "result": {
         "type": "string",
