@@ -35,6 +35,45 @@
           "dimensionality": "scalar"
         }
       ]
+    },
+    {
+      "id": "KMAPI",
+      "name": "KMAPI",
+      "description": "Calls the KMAPI to get a chat completion.",
+      "helpUrl": "http://www.contoso.com",
+      "result": {
+        "type": "string",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "userMsg",
+          "description": "The user's message.",
+          "type": "string",
+          "dimensionality": "scalar"
+        },
+        {
+          "name": "systemMsg",
+          "description": "The system message.",
+          "type": "string",
+          "dimensionality": "scalar",
+          "optional": true
+        },
+        {
+          "name": "model",
+          "description": "The model alias.",
+          "type": "string",
+          "dimensionality": "scalar",
+          "optional": true
+        },
+        {
+          "name": "extension",
+          "description": "The extension.",
+          "type": "string",
+          "dimensionality": "scalar",
+          "optional": true
+        }
+      ]
     }
   ]
 }
