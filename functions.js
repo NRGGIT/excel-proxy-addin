@@ -70,6 +70,7 @@ function TESTGET(url) {
  * @returns {string} The completion from the API.
  */
 function KMAPI(userMsg, systemMsg, model, extension) {
+    DEBUGLOG("KMAPI function started.");
     return new Promise(function (resolve, reject) {
         // @ts-ignore
         window.Excel.run(function (context) {
@@ -79,72 +80,86 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                 return settings.getItem(name);
             });
 
-            return context.sync().then(function() {
-                var settingsValues = {};
-                settingObjects.forEach(function(setting, index) {
-                    settingsValues[settingNames[index]] = setting.value;
-                });
+            return context.sync()
+                .then(function() {
+                    DEBUGLOG("Settings loaded.");
+                    var settingsValues = {};
+                    settingObjects.forEach(function(setting, index) {
+                        settingsValues[settingNames[index]] = setting.value;
+                    });
 
-                var knowledge_model_id = settingsValues["knowledge_model_id"];
-                var api_key = settingsValues["api_key"];
-                var ext = extension || settingsValues["default_extension"];
-                var model_alias = model || settingsValues["default_model_alias"];
-                var max_tokens = settingsValues["max_tokens"];
-                var temp = settingsValues["temperature"];
+                    var knowledge_model_id = settingsValues["knowledge_model_id"];
+                    var api_key = settingsValues["api_key"];
+                    var ext = extension || settingsValues["default_extension"];
+                    var model_alias = model || settingsValues["default_model_alias"];
+                    var max_tokens = settingsValues["max_tokens"];
+                    var temp = settingsValues["temperature"];
 
-                if (!knowledge_model_id || !api_key) {
-                    reject(new Error("knowledge_model_id and api_key must be set in the task pane."));
-                    return;
-                }
-
-                var url = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/" + ext;
-                var headers = {
-                    "X-KM-AccessKey": "Bearer " + api_key,
-                    "Content-Type": "application/json"
-                };
-
-                var messages = [];
-                if (systemMsg) {
-                    messages.push({ role: "system", content: [{ type: "text", text: systemMsg }] });
-                }
-                messages.push({ role: "user", content: [{ type: "text", text: userMsg }] });
-
-                var body = {
-                    model: model_alias,
-                    messages: messages,
-                    response_format: { type: "text", json_schema: {} },
-                    temperature: parseFloat(temp),
-                    max_completion_tokens: parseInt(max_tokens),
-                    top_p: 1,
-                    frequency_penalty: 0,
-                    presence_penalty: 0
-                };
-
-                fetch(url, {
-                    method: "POST",
-                    headers: headers,
-                    body: JSON.stringify(body)
-                })
-                .then(function(response) {
-                    if (response.ok) {
-                        return response.json();
-                    } else {
-                        response.text().then(function(text) {
-                            reject(new Error("API Error: " + response.status + " " + text));
-                        });
+                    if (!knowledge_model_id || !api_key) {
+                        DEBUGLOG("Missing knowledge_model_id or api_key.");
+                        reject(new Error("knowledge_model_id and api_key must be set in the task pane."));
+                        return;
                     }
-                })
-                .then(function(json) {
-                    if (json.choices && json.choices.length > 0) {
-                        resolve(json.choices[0].message.content);
-                    } else {
-                        reject(new Error("Invalid response from API."));
+
+                    var url = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/" + ext;
+                    DEBUGLOG("Requesting URL: " + url);
+                    var headers = {
+                        "X-KM-AccessKey": "Bearer " + api_key,
+                        "Content-Type": "application/json"
+                    };
+
+                    var messages = [];
+                    if (systemMsg) {
+                        messages.push({ role: "system", content: [{ type: "text", text: systemMsg }] });
                     }
+                    messages.push({ role: "user", content: [{ type: "text", text: userMsg }] });
+
+                    var body = {
+                        model: model_alias,
+                        messages: messages,
+                        response_format: { type: "text", json_schema: {} },
+                        temperature: parseFloat(temp),
+                        max_completion_tokens: parseInt(max_tokens),
+                        top_p: 1,
+                        frequency_penalty: 0,
+                        presence_penalty: 0
+                    };
+
+                    fetch(url, {
+                        method: "POST",
+                        headers: headers,
+                        body: JSON.stringify(body)
+                    })
+                    .then(function(response) {
+                        DEBUGLOG("Fetch response received. Status: " + response.status);
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            response.text().then(function(text) {
+                                DEBUGLOG("API Error: " + response.status + " " + text);
+                                reject(new Error("API Error: " + response.status + " " + text));
+                            });
+                        }
+                    })
+                    .then(function(json) {
+                        DEBUGLOG("Response JSON parsed.");
+                        if (json.choices && json.choices.length > 0) {
+                            DEBUGLOG("Found choice, resolving promise.");
+                            resolve(json.choices[0].message.content);
+                        } else {
+                            DEBUGLOG("Invalid response from API.");
+                            reject(new Error("Invalid response from API."));
+                        }
+                    })
+                    .catch(function(error) {
+                        DEBUGLOG("Fetch error: " + error.message);
+                        reject(error);
+                    });
                 })
                 .catch(function(error) {
+                    DEBUGLOG("Error loading settings: " + error.message);
                     reject(error);
                 });
-            });
         });
     });
 }
