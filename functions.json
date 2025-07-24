@@ -17,6 +17,24 @@
           "dimensionality": "scalar"
         }
       ]
+    },
+    {
+      "id": "LOG",
+      "name": "LOG",
+      "description": "Writes a message to cell A1.",
+      "helpUrl": "http://www.contoso.com",
+      "result": {
+        "type": "string",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "message",
+          "description": "The message to write.",
+          "type": "string",
+          "dimensionality": "scalar"
+        }
+      ]
     }
   ]
 }
