@@ -98,12 +98,8 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                         return;
                     }
 
-                    var url = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/" + ext;
-                    var headers = {
-                        "X-KM-AccessKey": "Bearer " + api_key,
-                        "Content-Type": "application/json"
-                    };
-
+                    var targetUrl = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/" + ext;
+                    
                     var messages = [];
                     if (systemMsg) {
                         messages.push({ role: "system", content: [{ type: "text", text: systemMsg }] });
@@ -121,9 +117,14 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                         presence_penalty: 0
                     };
 
-                    fetch(url, {
+                    var proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(targetUrl);
+
+                    fetch(proxyUrl, {
                         method: "POST",
-                        headers: headers,
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-KM-AccessKey": "Bearer " + api_key
+                        },
                         body: JSON.stringify(body)
                     })
                     .then(function(response) {
@@ -173,12 +174,8 @@ function KMAPITEST(knowledge_model_id, api_key, userMsg, systemMsg, model, exten
         var max_tokens_val = max_tokens || 2048;
         var temp_val = temperature || 0.7;
 
-        var url = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/" + ext;
-        var headers = {
-            "X-KM-AccessKey": "Bearer " + api_key,
-            "Content-Type": "application/json"
-        };
-
+        var targetUrl = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/" + ext;
+        
         var messages = [];
         if (systemMsg) {
             messages.push({ role: "system", content: [{ type: "text", text: systemMsg }] });
@@ -196,9 +193,14 @@ function KMAPITEST(knowledge_model_id, api_key, userMsg, systemMsg, model, exten
             presence_penalty: 0
         };
 
-        fetch(url, {
+        var proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(targetUrl);
+
+        fetch(proxyUrl, {
             method: "POST",
-            headers: headers,
+            headers: {
+                "Content-Type": "application/json",
+                "X-KM-AccessKey": "Bearer " + api_key
+            },
             body: JSON.stringify(body)
         })
         .then(function(response) {
