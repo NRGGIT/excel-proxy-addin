@@ -86,8 +86,6 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                         settingsValues[settingNames[index]] = setting.value;
                     });
 
-                    DEBUGLOG("Settings: " + JSON.stringify(settingsValues));
-
                     var knowledge_model_id = settingsValues["knowledge_model_id"];
                     var api_key = settingsValues["api_key"];
                     var ext = extension || settingsValues["default_extension"];
@@ -149,7 +147,7 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                     });
                 })
                 .catch(function(error) {
-                    reject(error);
+                    reject(new Error("Failed to load settings: " + error.message));
                 });
         });
     });
