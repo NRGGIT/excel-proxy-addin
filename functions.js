@@ -153,6 +153,76 @@ function KMAPI(userMsg, systemMsg, model, extension) {
     });
 }
 
+/**
+ * Calls the KMAPI with all parameters provided directly.
+ * @customfunction
+ * @param {string} knowledge_model_id The Knowledge Model ID.
+ * @param {string} api_key The API Key.
+ * @param {string} userMsg The user's message.
+ * @param {string} [systemMsg] The system message.
+ * @param {string} [model] The model alias.
+ * @param {string} [extension] The extension.
+ * @param {number} [max_tokens] The max tokens.
+ * @param {number} [temperature] The temperature.
+ * @returns {string} The completion from the API.
+ */
+function KMAPITEST(knowledge_model_id, api_key, userMsg, systemMsg, model, extension, max_tokens, temperature) {
+    return new Promise(function (resolve, reject) {
+        var ext = extension || "direct_llm";
+        var model_alias = model || "gpt4.1-mini";
+        var max_tokens_val = max_tokens || 2048;
+        var temp_val = temperature || 0.7;
+
+        var url = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/" + ext;
+        var headers = {
+            "X-KM-AccessKey": "Bearer " + api_key,
+            "Content-Type": "application/json"
+        };
+
+        var messages = [];
+        if (systemMsg) {
+            messages.push({ role: "system", content: [{ type: "text", text: systemMsg }] });
+        }
+        messages.push({ role: "user", content: [{ type: "text", text: userMsg }] });
+
+        var body = {
+            model: model_alias,
+            messages: messages,
+            response_format: { type: "text", json_schema: {} },
+            temperature: parseFloat(temp_val),
+            max_completion_tokens: parseInt(max_tokens_val),
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0
+        };
+
+        fetch(url, {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify(body)
+        })
+        .then(function(response) {
+            if (response.ok) {
+                return response.json();
+            } else {
+                response.text().then(function(text) {
+                    reject(new Error("API Error: " + response.status + " " + text));
+                });
+            }
+        })
+        .then(function(json) {
+            if (json.choices && json.choices.length > 0) {
+                resolve(json.choices[0].message.content);
+            } else {
+                reject(new Error("Invalid response from API."));
+            }
+        })
+        .catch(function(error) {
+            reject(error);
+        });
+    });
+}
+
 // @ts-ignore
 if (window.CustomFunctions) {
     // @ts-ignore
@@ -161,4 +231,6 @@ if (window.CustomFunctions) {
     CustomFunctions.associate("TESTGET", TESTGET);
     // @ts-ignore
     CustomFunctions.associate("KMAPI", KMAPI);
+    // @ts-ignore
+    CustomFunctions.associate("KMAPITEST", KMAPITEST);
 }

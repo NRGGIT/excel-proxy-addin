@@ -74,6 +74,71 @@
           "optional": true
         }
       ]
+    },
+    {
+      "id": "KMAPITEST",
+      "name": "KMAPITEST",
+      "description": "Calls the KMAPI with all parameters provided directly.",
+      "helpUrl": "http://www.contoso.com",
+      "result": {
+        "type": "string",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "knowledge_model_id",
+          "description": "The Knowledge Model ID.",
+          "type": "string",
+          "dimensionality": "scalar"
+        },
+        {
+          "name": "api_key",
+          "description": "The API Key.",
+          "type": "string",
+          "dimensionality": "scalar"
+        },
+        {
+          "name": "userMsg",
+          "description": "The user's message.",
+          "type": "string",
+          "dimensionality": "scalar"
+        },
+        {
+          "name": "systemMsg",
+          "description": "The system message.",
+          "type": "string",
+          "dimensionality": "scalar",
+          "optional": true
+        },
+        {
+          "name": "model",
+          "description": "The model alias.",
+          "type": "string",
+          "dimensionality": "scalar",
+          "optional": true
+        },
+        {
+          "name": "extension",
+          "description": "The extension.",
+          "type": "string",
+          "dimensionality": "scalar",
+          "optional": true
+        },
+        {
+          "name": "max_tokens",
+          "description": "The max tokens.",
+          "type": "number",
+          "dimensionality": "scalar",
+          "optional": true
+        },
+        {
+          "name": "temperature",
+          "description": "The temperature.",
+          "type": "number",
+          "dimensionality": "scalar",
+          "optional": true
+        }
+      ]
     }
   ]
 }
