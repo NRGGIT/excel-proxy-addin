@@ -5,28 +5,7 @@
  * @returns {string} A confirmation message.
  */
 function DEBUGLOG(message) {
-    // @ts-ignore
-    if (window.Excel) {
-        // @ts-ignore
-        window.Excel.run(function (context) {
-            var sheet = context.workbook.worksheets.getActiveWorksheet();
-            var range = sheet.getRange("A1");
-            range.values = [[message]];
-            return context.sync();
-        }).catch(function (error) {
-            console.log("Error: " + error);
-            // @ts-ignore
-            if (window.Excel.run) {
-                // @ts-ignore
-                window.Excel.run(function (ctx) {
-                    var range = ctx.workbook.worksheets.getActiveWorksheet().getRange("A1");
-                    range.values = [["Error logging: " + error.message]];
-                    return ctx.sync();
-                });
-            }
-        });
-    }
-    return "Logged.";
+    return message;
 }
 
 /**
@@ -70,7 +49,6 @@ function TESTGET(url) {
  * @returns {string} The completion from the API.
  */
 function KMAPI(userMsg, systemMsg, model, extension) {
-    DEBUGLOG("KMAPI function started.");
     return new Promise(function (resolve, reject) {
         // @ts-ignore
         window.Excel.run(function (context) {
@@ -82,7 +60,6 @@ function KMAPI(userMsg, systemMsg, model, extension) {
 
             return context.sync()
                 .then(function() {
-                    DEBUGLOG("Settings loaded.");
                     var settingsValues = {};
                     settingObjects.forEach(function(setting, index) {
                         settingsValues[settingNames[index]] = setting.value;
@@ -96,13 +73,11 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                     var temp = settingsValues["temperature"];
 
                     if (!knowledge_model_id || !api_key) {
-                        DEBUGLOG("Missing knowledge_model_id or api_key.");
                         reject(new Error("knowledge_model_id and api_key must be set in the task pane."));
                         return;
                     }
 
                     var url = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/" + ext;
-                    DEBUGLOG("Requesting URL: " + url);
                     var headers = {
                         "X-KM-AccessKey": "Bearer " + api_key,
                         "Content-Type": "application/json"
@@ -131,33 +106,26 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                         body: JSON.stringify(body)
                     })
                     .then(function(response) {
-                        DEBUGLOG("Fetch response received. Status: " + response.status);
                         if (response.ok) {
                             return response.json();
                         } else {
                             response.text().then(function(text) {
-                                DEBUGLOG("API Error: " + response.status + " " + text);
                                 reject(new Error("API Error: " + response.status + " " + text));
                             });
                         }
                     })
                     .then(function(json) {
-                        DEBUGLOG("Response JSON parsed.");
                         if (json.choices && json.choices.length > 0) {
-                            DEBUGLOG("Found choice, resolving promise.");
                             resolve(json.choices[0].message.content);
                         } else {
-                            DEBUGLOG("Invalid response from API.");
                             reject(new Error("Invalid response from API."));
                         }
                     })
                     .catch(function(error) {
-                        DEBUGLOG("Fetch error: " + error.message);
                         reject(error);
                     });
                 })
                 .catch(function(error) {
-                    DEBUGLOG("Error loading settings: " + error.message);
                     reject(error);
                 });
         });
