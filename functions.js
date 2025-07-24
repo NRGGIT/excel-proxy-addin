@@ -99,6 +99,7 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                     }
 
                     var url = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/" + ext;
+                    var proxyUrl = "https://cors-anywhere.herokuapp.com/" + url;
                     var headers = {
                         "X-KM-AccessKey": "Bearer " + api_key,
                         "Content-Type": "application/json"
@@ -121,7 +122,7 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                         presence_penalty: 0
                     };
 
-                    fetch(url, {
+                    fetch(proxyUrl, {
                         method: "POST",
                         headers: headers,
                         body: JSON.stringify(body)
@@ -196,9 +197,10 @@ function KMAPITEST(knowledge_model_id, api_key, userMsg, systemMsg, model, exten
             presence_penalty: 0
         };
 
-        DEBUGLOG("URL: " + url + " HEADERS: " + JSON.stringify(headers) + " BODY: " + JSON.stringify(body));
+        var proxyUrl = "https://cors-anywhere.herokuapp.com/" + url;
+        DEBUGLOG("URL: " + proxyUrl + " HEADERS: " + JSON.stringify(headers) + " BODY: " + JSON.stringify(body));
 
-        fetch(url, {
+        fetch(proxyUrl, {
             method: "POST",
             headers: headers,
             body: JSON.stringify(body)
@@ -220,6 +222,7 @@ function KMAPITEST(knowledge_model_id, api_key, userMsg, systemMsg, model, exten
             }
         })
         .catch(function(error) {
+            DEBUGLOG("Fetch Error: " + error.message);
             reject(error);
         });
     });
