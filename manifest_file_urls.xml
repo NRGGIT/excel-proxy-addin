@@ -6,8 +6,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="KMAPI Excel Add-in"/>
   <Description DefaultValue="A simple add-in to make POST requests to KMAPI from Excel."/>
-  <IconUrl DefaultValue="http://localhost:8000/assets/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="http://localhost:8000/assets/icon-80.png"/>
+  <IconUrl DefaultValue="file:///Users/roma/notebooks/myproj/excelllm/constr-excel/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="file:///Users/roma/notebooks/myproj/excelllm/constr-excel/assets/icon-80.png"/>
   <SupportUrl DefaultValue="https://www.contoso.com/help"/>
   <AppDomains>
     <AppDomain>https://api.allorigins.win</AppDomain>
@@ -15,13 +15,12 @@
     <AppDomain>https://cors-anywhere.herokuapp.com</AppDomain>
     <AppDomain>https://thingproxy.freeboard.io</AppDomain>
     <AppDomain>https://corsproxy.io</AppDomain>
-    <AppDomain>http://localhost:8000</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Workbook"/>
   </Hosts>
   <DefaultSettings>
-    <SourceLocation DefaultValue="http://localhost:8000/taskpane.html"/>
+    <SourceLocation DefaultValue="file:///Users/roma/notebooks/myproj/excelllm/constr-excel/taskpane.html"/>
   </DefaultSettings>
   <Permissions>ReadWriteDocument</Permissions>
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
@@ -80,16 +79,16 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="http://localhost:8000/assets/icon-16.png"/>
-        <bt:Image id="Icon.32x32" DefaultValue="http://localhost:8000/assets/icon-32.png"/>
-        <bt:Image id="Icon.80x80" DefaultValue="http://localhost:8000/assets/icon-80.png"/>
+        <bt:Image id="Icon.16x16" DefaultValue="file:///Users/roma/notebooks/myproj/excelllm/constr-excel/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="file:///Users/roma/notebooks/myproj/excelllm/constr-excel/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="file:///Users/roma/notebooks/myproj/excelllm/constr-excel/assets/icon-80.png"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Functions.Script.Url" DefaultValue="http://localhost:8000/functions.js"/>
-        <bt:Url id="Functions.Page.Url" DefaultValue="http://localhost:8000/functions.html"/>
-        <bt:Url id="Functions.Metadata.Url" DefaultValue="http://localhost:8000/functions.json"/>
+        <bt:Url id="Functions.Script.Url" DefaultValue="file:///Users/roma/notebooks/myproj/excelllm/constr-excel/functions.js"/>
+        <bt:Url id="Functions.Page.Url" DefaultValue="file:///Users/roma/notebooks/myproj/excelllm/constr-excel/functions.html"/>
+        <bt:Url id="Functions.Metadata.Url" DefaultValue="file:///Users/roma/notebooks/myproj/excelllm/constr-excel/functions.json"/>
         <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://go.microsoft.com/fwlink/?LinkId=276812"/>
-        <bt:Url id="Taskpane.Url" DefaultValue="http://localhost:8000/taskpane.html"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="file:///Users/roma/notebooks/myproj/excelllm/constr-excel/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GetStarted.Title" DefaultValue="Get started with the KMAPI add-in!"/>
@@ -102,4 +101,4 @@
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>
-</OfficeApp>
+</OfficeApp> 
