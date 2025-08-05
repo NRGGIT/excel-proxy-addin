@@ -61,6 +61,62 @@ function TESTGET(url) {
 }
 
 /**
+ * Makes a POST request with multiple proxy fallbacks
+ * @param {string} url The target URL
+ * @param {object} options The fetch options
+ * @returns {Promise} The fetch promise
+ */
+function makePostRequest(url, options) {
+    const proxies = [
+        null, // Direct request (no proxy)
+        "https://cors-anywhere.herokuapp.com/",
+        "https://api.allorigins.win/raw?url=",
+        "https://thingproxy.freeboard.io/fetch/",
+        "https://corsproxy.io/?"
+    ];
+
+    function tryProxy(index) {
+        if (index >= proxies.length) {
+            throw new Error("All proxy attempts failed");
+        }
+
+        const proxy = proxies[index];
+        const targetUrl = proxy ? proxy + url : url;
+        
+        DEBUGLOG(`Trying proxy ${index + 1}/${proxies.length}: ${proxy || 'direct'}`);
+        
+        const fetchOptions = {
+            method: "POST",
+            headers: options.headers,
+            body: options.body
+        };
+
+        // For some proxies, we need to modify the request
+        if (proxy === "https://api.allorigins.win/raw?url=") {
+            // This proxy doesn't support POST, so we'll skip it for POST requests
+            return tryProxy(index + 1);
+        }
+
+        return fetch(targetUrl, fetchOptions)
+            .then(function(response) {
+                DEBUGLOG(`Proxy ${index + 1} response status: ${response.status}`);
+                if (response.ok) {
+                    return response;
+                } else {
+                    DEBUGLOG(`Proxy ${index + 1} failed with status: ${response.status}`);
+                    return tryProxy(index + 1);
+                }
+            })
+            .catch(function(error) {
+                DEBUGLOG(`Proxy ${index + 1} error: ${error.message}`);
+                return tryProxy(index + 1);
+            });
+    }
+
+    return tryProxy(0);
+}
+
+/**
  * Calls the KMAPI to get a chat completion.
  * @customfunction
  * @param {string} userMsg The user's message.
@@ -98,11 +154,14 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                         return;
                     }
 
+                    // Fixed API endpoint structure
                     var url = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/" + ext;
-                    var proxyUrl = "https://cors-anywhere.herokuapp.com/" + url;
+                    
+                    // Fixed headers - removed "Bearer " prefix as it should be just the API key
                     var headers = {
-                        "X-KM-AccessKey": "Bearer " + api_key,
-                        "Content-Type": "application/json"
+                        "X-KM-AccessKey": api_key,
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
                     };
 
                     var messages = [];
@@ -122,28 +181,27 @@ function KMAPI(userMsg, systemMsg, model, extension) {
                         presence_penalty: 0
                     };
 
-                    fetch(proxyUrl, {
-                        method: "POST",
+                    DEBUGLOG("Making KMAPI request to: " + url);
+                    DEBUGLOG("Headers: " + JSON.stringify(headers));
+                    DEBUGLOG("Body: " + JSON.stringify(body));
+
+                    makePostRequest(url, {
                         headers: headers,
                         body: JSON.stringify(body)
                     })
                     .then(function(response) {
-                        if (response.ok) {
-                            return response.json();
-                        } else {
-                            response.text().then(function(text) {
-                                reject(new Error("API Error: " + response.status + " " + text));
-                            });
-                        }
+                        return response.json();
                     })
                     .then(function(json) {
+                        DEBUGLOG("API Response: " + JSON.stringify(json));
                         if (json.choices && json.choices.length > 0) {
                             resolve(json.choices[0].message.content);
                         } else {
-                            reject(new Error("Invalid response from API."));
+                            reject(new Error("Invalid response from API: " + JSON.stringify(json)));
                         }
                     })
                     .catch(function(error) {
+                        DEBUGLOG("KMAPI Error: " + error.message);
                         reject(error);
                     });
                 })
@@ -174,10 +232,14 @@ function KMAPITEST(knowledge_model_id, api_key, userMsg, systemMsg, model, exten
         var max_tokens_val = max_tokens || 2048;
         var temp_val = temperature || 0.7;
 
+        // Fixed API endpoint structure
         var url = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/" + ext;
+        
+        // Fixed headers - removed "Bearer " prefix
         var headers = {
-            "X-KM-AccessKey": "Bearer " + api_key,
-            "Content-Type": "application/json"
+            "X-KM-AccessKey": api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/json"
         };
 
         var messages = [];
@@ -197,33 +259,78 @@ function KMAPITEST(knowledge_model_id, api_key, userMsg, systemMsg, model, exten
             presence_penalty: 0
         };
 
-        var proxyUrl = "https://cors-anywhere.herokuapp.com/" + url;
-        DEBUGLOG("URL: " + proxyUrl + " HEADERS: " + JSON.stringify(headers) + " BODY: " + JSON.stringify(body));
+        DEBUGLOG("KMAPITEST - URL: " + url);
+        DEBUGLOG("KMAPITEST - Headers: " + JSON.stringify(headers));
+        DEBUGLOG("KMAPITEST - Body: " + JSON.stringify(body));
 
-        fetch(proxyUrl, {
-            method: "POST",
+        makePostRequest(url, {
             headers: headers,
             body: JSON.stringify(body)
         })
         .then(function(response) {
-            if (response.ok) {
-                return response.json();
-            } else {
-                response.text().then(function(text) {
-                    reject(new Error("API Error: " + response.status + " " + text));
-                });
-            }
+            return response.json();
         })
         .then(function(json) {
+            DEBUGLOG("KMAPITEST Response: " + JSON.stringify(json));
             if (json.choices && json.choices.length > 0) {
                 resolve(json.choices[0].message.content);
             } else {
-                reject(new Error("Invalid response from API."));
+                reject(new Error("Invalid response from API: " + JSON.stringify(json)));
             }
         })
         .catch(function(error) {
-            DEBUGLOG("Fetch Error: " + error.message);
+            DEBUGLOG("KMAPITEST Error: " + error.message);
             reject(error);
+        });
+    });
+}
+
+/**
+ * Tests the API connection and returns diagnostic information.
+ * @customfunction
+ * @param {string} knowledge_model_id The Knowledge Model ID.
+ * @param {string} api_key The API Key.
+ * @returns {string} Diagnostic information about the API connection.
+ */
+function TESTAPI(knowledge_model_id, api_key) {
+    return new Promise(function (resolve, reject) {
+        var url = "https://constructor.app/api/platform-kmapi/v1/knowledge-models/" + knowledge_model_id + "/chat/completions/direct_llm";
+        var headers = {
+            "X-KM-AccessKey": api_key,
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        };
+
+        var body = {
+            model: "gpt4.1-mini",
+            messages: [{ role: "user", content: [{ type: "text", text: "Hello" }] }],
+            response_format: { type: "text", json_schema: {} },
+            temperature: 0.7,
+            max_completion_tokens: 10,
+            top_p: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0
+        };
+
+        DEBUGLOG("TESTAPI - Testing connection to: " + url);
+        DEBUGLOG("TESTAPI - Headers: " + JSON.stringify(headers));
+
+        makePostRequest(url, {
+            headers: headers,
+            body: JSON.stringify(body)
+        })
+        .then(function(response) {
+            DEBUGLOG("TESTAPI - Response status: " + response.status);
+            DEBUGLOG("TESTAPI - Response headers: " + JSON.stringify([...response.headers.entries()]));
+            return response.json();
+        })
+        .then(function(json) {
+            DEBUGLOG("TESTAPI - Response body: " + JSON.stringify(json));
+            resolve("✅ API connection successful! Response: " + JSON.stringify(json));
+        })
+        .catch(function(error) {
+            DEBUGLOG("TESTAPI - Error: " + error.message);
+            resolve("❌ API connection failed: " + error.message);
         });
     });
 }
@@ -238,4 +345,6 @@ if (window.CustomFunctions) {
     CustomFunctions.associate("KMAPI", KMAPI);
     // @ts-ignore
     CustomFunctions.associate("KMAPITEST", KMAPITEST);
+    // @ts-ignore
+    CustomFunctions.associate("TESTAPI", TESTAPI);
 }

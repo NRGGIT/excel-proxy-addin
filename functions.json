@@ -37,6 +37,30 @@
       ]
     },
     {
+      "id": "TESTAPI",
+      "name": "TESTAPI",
+      "description": "Tests the API connection and returns diagnostic information.",
+      "helpUrl": "http://www.contoso.com",
+      "result": {
+        "type": "string",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "knowledge_model_id",
+          "description": "The Knowledge Model ID.",
+          "type": "string",
+          "dimensionality": "scalar"
+        },
+        {
+          "name": "api_key",
+          "description": "The API Key.",
+          "type": "string",
+          "dimensionality": "scalar"
+        }
+      ]
+    },
+    {
       "id": "KMAPI",
       "name": "KMAPI",
       "description": "Calls the KMAPI to get a chat completion.",
