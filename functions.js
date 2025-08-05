@@ -1,32 +1,42 @@
 /**
+ * Simple test function that doesn't require Excel context.
+ * @customfunction SIMPLETEST
+ * @param {string} message The message to return.
+ * @returns {string} The message with a prefix.
+ */
+function SIMPLETEST(message) {
+    return "Test: " + message;
+}
+
+/**
  * Writes a message to cell A1 for debugging.
  * @customfunction DEBUGLOG
  * @param {string} message The message to write.
  * @returns {string} A confirmation message.
  */
 function DEBUGLOG(message) {
-    // @ts-ignore
-    if (window.Excel) {
+    try {
         // @ts-ignore
-        window.Excel.run(function (context) {
-            var sheet = context.workbook.worksheets.getActiveWorksheet();
-            var range = sheet.getRange("A1");
-            range.values = [[message]];
-            return context.sync();
-        }).catch(function (error) {
-            console.log("Error: " + error);
+        if (window.Excel) {
             // @ts-ignore
-            if (window.Excel.run) {
-                // @ts-ignore
-                window.Excel.run(function (ctx) {
-                    var range = ctx.workbook.worksheets.getActiveWorksheet().getRange("A1");
-                    range.values = [["Error logging: " + error.message]];
-                    return ctx.sync();
-                });
-            }
-        });
+            window.Excel.run(function (context) {
+                var sheet = context.workbook.worksheets.getActiveWorksheet();
+                var range = sheet.getRange("A1");
+                range.values = [[message]];
+                return context.sync();
+            }).catch(function (error) {
+                console.log("Excel Error: " + error);
+                // Return error message instead of trying to write to Excel again
+                return "Error: " + error.message;
+            });
+        } else {
+            console.log("DEBUGLOG: " + message);
+        }
+    } catch (error) {
+        console.log("DEBUGLOG Error: " + error);
+        return "Error: " + error.message;
     }
-    return "Logged.";
+    return "Logged: " + message;
 }
 
 /**
@@ -337,6 +347,8 @@ function TESTAPI(knowledge_model_id, api_key) {
 
 // @ts-ignore
 if (window.CustomFunctions) {
+    // @ts-ignore
+    CustomFunctions.associate("SIMPLETEST", SIMPLETEST);
     // @ts-ignore
     CustomFunctions.associate("DEBUGLOG", DEBUGLOG);
     // @ts-ignore

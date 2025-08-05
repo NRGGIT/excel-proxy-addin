@@ -1,6 +1,24 @@
 {
   "functions": [
     {
+      "id": "SIMPLETEST",
+      "name": "SIMPLETEST",
+      "description": "Simple test function that doesn't require Excel context.",
+      "helpUrl": "http://www.contoso.com",
+      "result": {
+        "type": "string",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "message",
+          "description": "The message to return.",
+          "type": "string",
+          "dimensionality": "scalar"
+        }
+      ]
+    },
+    {
       "id": "TESTGET",
       "name": "TESTGET",
       "description": "Gets the text from a URL.",
