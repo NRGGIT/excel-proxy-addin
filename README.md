@@ -1,146 +1,409 @@
-# Excel KMAPI Add-in
+# KMAPI Excel Add-in
 
-This Excel add-in allows you to make POST requests to the KMAPI (Knowledge Model API) directly from Excel using custom functions.
+A Microsoft Excel add-in that integrates with Constructor.app's KMAPI endpoints, providing custom functions for AI-powered chat completions directly in Excel.
 
-## Issues Fixed
+## 🏗️ Architecture Overview
 
-The original add-in had several issues that prevented POST requests from working:
-
-1. **CORS Proxy Issues**: Relied on unreliable external proxies
-2. **Incorrect API Headers**: Wrong authentication header format
-3. **Poor Error Handling**: Limited debugging capabilities
-4. **External Dependencies**: Manifest pointed to external URLs
-
-## Solutions Implemented
-
-### 1. Multiple Proxy Fallbacks
-The add-in now tries multiple CORS proxies in sequence:
-- Direct request (no proxy)
-- cors-anywhere.herokuapp.com
-- thingproxy.freeboard.io
-- corsproxy.io
-
-### 2. Fixed Authentication
-- Removed "Bearer " prefix from API key header
-- Added proper Accept headers
-- Improved error handling
-
-### 3. Enhanced Debugging
-- Added comprehensive logging to cell A1
-- Better error messages
-- Request/response logging
-
-### 4. Local Development
-- Updated manifest to use local file references
-- Added local server for testing
-
-## Setup Instructions
-
-### 1. Start Local Server
-```bash
-python server.py
-```
-This starts a local server at `http://localhost:8000`
-
-### 2. Load Add-in in Excel
-1. Open Excel
-2. Go to **Insert** > **My Add-ins** > **Upload My Add-in**
-3. Browse to the `manifest.xml` file
-4. Or use the URL: `http://localhost:8000/manifest.xml`
-
-### 3. Configure Settings
-1. Click the **Settings** button in the **KMAPI** group on the **Home** tab
-2. Enter your:
-   - **Knowledge Model ID**
-   - **API Key**
-   - **Default Extension** (default: direct_llm)
-   - **Default Model Alias** (default: gpt4.1-mini)
-   - **Max Tokens** (default: 2048)
-   - **Temperature** (default: 0.7)
-3. Click **Save Settings**
-
-## Available Functions
-
-### DEBUGLOG(message)
-Writes debug messages to cell A1.
-```
-=DEBUGLOG("Testing connection")
+```mermaid
+graph TB
+    subgraph "Excel Add-in"
+        A[Taskpane UI] --> B[Custom Functions]
+        B --> C[KMAPI Function]
+    end
+    
+    subgraph "Local Proxy Server"
+        D[Python HTTP Server] --> E[Settings Storage]
+        D --> F[Proxy Service]
+        D --> G[API Connectivity Test]
+    end
+    
+    subgraph "Constructor.app API"
+        H[KMAPI Endpoints] --> I[Chat Completions]
+        H --> J[Authentication]
+    end
+    
+    A --> D
+    C --> D
+    D --> H
+    
+    style A fill:#e1f5fe
+    style B fill:#e1f5fe
+    style C fill:#e1f5fe
+    style D fill:#f3e5f5
+    style E fill:#f3e5f5
+    style F fill:#f3e5f5
+    style G fill:#f3e5f5
+    style H fill:#e8f5e8
+    style I fill:#e8f5e8
+    style J fill:#e8f5e8
 ```
 
-### TESTGET(url)
-Tests GET requests through a proxy.
-```
-=TESTGET("https://api.example.com/data")
-```
+## 🎯 Key Design Principles
 
-### TESTAPI(knowledge_model_id, api_key)
-Tests the API connection and returns diagnostic information.
-```
-=TESTAPI("your_model_id", "your_api_key")
-```
+### 1. **Localhost Proxy Approach**
+Instead of making direct API calls from Excel (which face CORS limitations), all requests go through a local Python proxy server:
 
-### KMAPI(userMsg, [systemMsg], [model], [extension])
-Makes a POST request to KMAPI using saved settings.
-```
-=KMAPI("Hello, how are you?")
-=KMAPI("Explain quantum physics", "You are a helpful assistant", "gpt4.1-mini", "direct_llm")
-```
+```javascript
+// Instead of direct API calls
+fetch('https://constructor.app/api/...') // ❌ CORS issues
 
-### KMAPITEST(knowledge_model_id, api_key, userMsg, [systemMsg], [model], [extension], [max_tokens], [temperature])
-Makes a POST request with all parameters provided directly.
-```
-=KMAPITEST("your_model_id", "your_api_key", "Hello world")
+// Use local proxy
+fetch('http://localhost:8000/proxy', {
+    method: 'POST',
+    body: JSON.stringify({
+        url: 'https://constructor.app/api/...',
+        headers: { /* API headers */ },
+        body: '/* request body */'
+    })
+}) // ✅ No CORS issues
 ```
 
-## Troubleshooting
+### 2. **Server-Side Settings Storage**
+To avoid Excel's context limitations between taskpane and custom functions, settings are stored on the server:
 
-### If POST requests fail:
-1. Check the debug log in cell A1 using `=DEBUGLOG("test")`
-2. Verify your API credentials are correct
-3. Try different proxies by checking the debug output
-4. Ensure your Knowledge Model ID and API Key are valid
+```mermaid
+sequenceDiagram
+    participant TP as Taskpane
+    participant S as Server
+    participant CF as Custom Function
+    
+    TP->>S: POST /settings (save)
+    S->>S: Store settings in memory
+    S-->>TP: Settings saved
+    
+    CF->>S: POST /settings (get)
+    S-->>CF: Return stored settings
+    CF->>S: POST /proxy (API call)
+    S->>API: Forward request
+    API-->>S: Response
+    S-->>CF: Return response
+```
 
-### Common Issues:
-- **CORS errors**: The add-in will automatically try multiple proxies
-- **Authentication errors**: Make sure your API key is correct (without "Bearer " prefix)
-- **Network errors**: Check your internet connection and firewall settings
+### 3. **Minimal Excel-Side Logic**
+Excel add-ins have limitations with context switching and global state. The solution minimizes Excel-side complexity:
 
-## Development
+```javascript
+// ❌ Avoid: Complex Excel context operations
+window.Excel.run(function(context) {
+    // Complex operations that can fail
+})
 
-### File Structure:
+// ✅ Prefer: Simple server calls
+fetch('/settings', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'get' })
+})
+```
+
+## 📁 Project Structure
+
 ```
 constr-excel/
-├── manifest.xml          # Add-in configuration
-├── taskpane.html        # Settings UI
-├── taskpane.js          # Settings logic
-├── functions.js         # Custom Excel functions
-├── functions.json       # Function metadata
-├── functions.html       # Function loader
-├── assets/             # Icons
-└── server.py           # Local development server
+├── manifest.xml          # Excel add-in configuration
+├── taskpane.html         # Settings UI
+├── taskpane.js           # Taskpane logic
+├── functions.html         # Custom functions loader
+├── functions.js           # Custom functions implementation
+├── functions.json         # Function metadata
+├── server.py             # Local proxy server
+├── assets/               # Icons and resources
+└── README.md            # This documentation
 ```
 
-### Making Changes:
-1. Edit the JavaScript files
-2. Restart the local server
-3. Reload the add-in in Excel
+## 🔧 Implementation Details
 
-## API Endpoint Structure
+### Server Endpoints
 
-The add-in makes POST requests to:
+#### `/settings` - Settings Management
+```python
+# Save settings
+POST /settings
+{
+    "action": "save",
+    "settings": {
+        "knowledge_model_id": "your_model_id",
+        "api_key": "your_api_key",
+        "default_extension": "direct_llm",
+        "default_model_alias": "gpt-4o-2024-08-06",
+        "max_tokens": 2048,
+        "temperature": 0.7
+    }
+}
+
+# Get settings
+POST /settings
+{
+    "action": "get"
+}
 ```
-https://constructor.app/api/platform-kmapi/v1/knowledge-models/{knowledge_model_id}/chat/completions/{extension}
+
+#### `/proxy` - API Proxy
+```python
+# Proxy API requests
+POST /proxy
+{
+    "url": "https://constructor.app/api/platform-kmapi/v1/knowledge-models/{model_id}/chat/completions/{extension}",
+    "method": "POST",
+    "headers": {
+        "X-KM-AccessKey": "Bearer your_api_key",
+        "Content-Type": "application/json"
+    },
+    "body": "/* JSON request body */"
+}
 ```
 
-With headers:
-```
-X-KM-AccessKey: {api_key}
-Content-Type: application/json
-Accept: application/json
+#### `/test-api` - Connectivity Test
+```python
+# Test API connectivity
+GET /test-api
+# Returns: {"status": "success", "message": "API connectivity test successful"}
 ```
 
-## Security Notes
+### Custom Functions
 
-- API keys are stored in Excel workbook settings (not secure for production)
-- Consider implementing proper key management for production use
-- The add-in includes multiple CORS proxies for reliability but may not work in all environments 
+#### `KMAPI(userMsg, systemMsg, model, extension)`
+Main function for chat completions:
+
+```javascript
+function KMAPI(userMsg, systemMsg, model, extension) {
+    return new Promise(function (resolve, reject) {
+        // 1. Get settings from server
+        getKMAPISettings().then(function(settings) {
+            // 2. Make API request through proxy
+            makePostRequest(url, {
+                headers: headers,
+                body: JSON.stringify(body)
+            })
+            .then(function(json) {
+                // 3. Parse and return response
+                resolve(json.choices[0].message.content);
+            })
+        });
+    });
+}
+```
+
+### Settings Flow
+
+```mermaid
+flowchart TD
+    A[User enters credentials in Taskpane] --> B[Taskpane saves to server]
+    B --> C[Server stores in memory]
+    C --> D[Custom function calls server]
+    D --> E[Server returns settings]
+    E --> F[Custom function makes API call]
+    F --> G[Server proxies to Constructor.app]
+    G --> H[Response returned to Excel]
+```
+
+## 🚀 Setup Instructions
+
+### 1. Start the Local Server
+```bash
+python server.py
+# Server runs on http://localhost:8000
+```
+
+### 2. Install Excel Add-in
+1. Copy `manifest.xml` to Excel's WEF folder
+2. Add `http://localhost:8000` to Excel's Trusted Add-in Catalogs
+3. Load the add-in in Excel
+
+### 3. Configure Settings
+1. Open the add-in taskpane
+2. Enter your Constructor.app API credentials
+3. Click "Save Settings"
+
+### 4. Use Custom Functions
+```excel
+=KMAPI("Hello, how are you?")
+=KMAPI("Explain quantum computing", "You are a helpful assistant")
+```
+
+## 🔄 Extending Functionality
+
+### Adding New API Endpoints
+
+1. **Add server endpoint** in `server.py`:
+```python
+def handle_new_endpoint(self):
+    # Your endpoint logic
+    pass
+```
+
+2. **Add custom function** in `functions.js`:
+```javascript
+function NEWFUNCTION(param1, param2) {
+    return new Promise(function (resolve, reject) {
+        // Your function logic
+    });
+}
+```
+
+3. **Register function** in `functions.json`:
+```json
+{
+  "id": "NEWFUNCTION",
+  "name": "NEWFUNCTION",
+  "description": "Your function description"
+}
+```
+
+### Adding New Settings
+
+1. **Update server settings** in `server.py`:
+```python
+SETTINGS = {
+    # ... existing settings
+    "new_setting": "default_value"
+}
+```
+
+2. **Update taskpane UI** in `taskpane.html`:
+```html
+<input type="text" id="new_setting" placeholder="New Setting">
+```
+
+3. **Update taskpane logic** in `taskpane.js`:
+```javascript
+var new_setting = document.getElementById("new_setting").value;
+// Include in settings object
+```
+
+### Adding New Custom Functions
+
+1. **Implement function** in `functions.js`:
+```javascript
+function NEWFUNCTION(param1, param2) {
+    return new Promise(function (resolve, reject) {
+        getKMAPISettings().then(function(settings) {
+            // Your implementation
+            makePostRequest(url, options)
+            .then(function(response) {
+                resolve(response);
+            })
+            .catch(function(error) {
+                reject(error);
+            });
+        });
+    });
+}
+```
+
+2. **Add metadata** in `functions.json`:
+```json
+{
+  "id": "NEWFUNCTION",
+  "name": "NEWFUNCTION",
+  "description": "Description of what the function does",
+  "result": {
+    "type": "string",
+    "dimensionality": "scalar"
+  },
+  "parameters": [
+    {
+      "name": "param1",
+      "description": "First parameter",
+      "type": "string",
+      "dimensionality": "scalar"
+    }
+  ]
+}
+```
+
+3. **Register function** in `functions.js`:
+```javascript
+// @ts-ignore
+CustomFunctions.associate("NEWFUNCTION", NEWFUNCTION);
+```
+
+## 🛠️ Development Best Practices
+
+### 1. **Always Use the Proxy Pattern**
+```javascript
+// ✅ Correct: Use proxy for all external API calls
+makePostRequest('https://constructor.app/api/...', options)
+
+// ❌ Avoid: Direct API calls from Excel
+fetch('https://constructor.app/api/...')
+```
+
+### 2. **Store Settings on Server**
+```javascript
+// ✅ Correct: Server-side settings
+fetch('http://localhost:8000/settings', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'get' })
+})
+
+// ❌ Avoid: Excel workbook settings in custom functions
+window.Excel.run(function(context) {
+    // Can cause context issues
+})
+```
+
+### 3. **Handle Errors Gracefully**
+```javascript
+function KMAPI(userMsg, systemMsg, model, extension) {
+    return new Promise(function (resolve, reject) {
+        try {
+            // Your implementation
+        } catch (error) {
+            reject(new Error("Clear error message"));
+        }
+    });
+}
+```
+
+### 4. **Use Proper Authentication Headers**
+```javascript
+var headers = {
+    "X-KM-AccessKey": "Bearer " + api_key,  // ✅ Correct format
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+};
+```
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+1. **Server not running**: Ensure `python server.py` is running
+2. **CORS errors**: All requests must go through the local proxy
+3. **Settings not found**: Save settings in taskpane first
+4. **API errors**: Check authentication headers and API key validity
+
+### Debug Functions
+
+- `=TESTGLOBALS()` - Test server settings connectivity
+- `=TESTAPICONNECTIVITY()` - Test API connectivity
+- `=VALIDATEAPIKEY(api_key)` - Validate API key
+
+## 📚 API Reference
+
+### Constructor.app KMAPI Endpoints
+
+- **Chat Completions**: `POST /api/platform-kmapi/v1/knowledge-models/{model_id}/chat/completions/{extension}`
+- **Health Check**: `GET /api/platform-kmapi/alive`
+
+### Authentication
+- **Header**: `X-KM-AccessKey: Bearer your_api_key`
+- **Content-Type**: `application/json`
+
+### Request Format
+```json
+{
+  "model": "gpt-4o-2024-08-06",
+  "messages": [
+    {
+      "role": "user",
+      "content": [{"type": "text", "text": "Your message"}]
+    }
+  ],
+  "response_format": {"type": "text", "json_schema": {}},
+  "temperature": 0.7,
+  "max_completion_tokens": 2048
+}
+```
+
+This architecture provides a robust, extensible foundation for integrating Constructor.app's KMAPI with Excel, avoiding common Excel add-in limitations while maintaining clean separation of concerns. 

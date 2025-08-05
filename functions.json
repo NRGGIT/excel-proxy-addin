@@ -19,6 +19,35 @@
       ]
     },
     {
+      "id": "TESTAPICONNECTIVITY",
+      "name": "TESTAPICONNECTIVITY",
+      "description": "Tests API connectivity using the local server.",
+      "helpUrl": "http://www.contoso.com",
+      "result": {
+        "type": "string",
+        "dimensionality": "scalar"
+      },
+      "parameters": []
+    },
+    {
+      "id": "VALIDATEAPIKEY",
+      "name": "VALIDATEAPIKEY",
+      "description": "Validates API key by making a test request.",
+      "helpUrl": "http://www.contoso.com",
+      "result": {
+        "type": "string",
+        "dimensionality": "scalar"
+      },
+      "parameters": [
+        {
+          "name": "api_key",
+          "description": "The API key to validate.",
+          "type": "string",
+          "dimensionality": "scalar"
+        }
+      ]
+    },
+    {
       "id": "TESTGET",
       "name": "TESTGET",
       "description": "Gets the text from a URL.",
@@ -35,6 +64,17 @@
           "dimensionality": "scalar"
         }
       ]
+    },
+    {
+      "id": "TESTGLOBALS",
+      "name": "TESTGLOBALS",
+      "description": "Simple test to check if global variables work in custom functions.",
+      "helpUrl": "http://www.contoso.com",
+      "result": {
+        "type": "string",
+        "dimensionality": "scalar"
+      },
+      "parameters": []
     },
     {
       "id": "DEBUGLOG",
